@@ -8,13 +8,26 @@
 
 import Foundation
 
+// Model in the MVVM
 struct MemoryGame<CardContent> {
     var cards: Array<Card>
     
-    func choose(card: Card){
-        // Logic of game matching cards
+    // Functions that mutate a structure must be marked with 'mutating'
+    mutating func choose(card: Card){
         print("Card chosen: \(card)")
-        
+        let chosenIndex: Int = self.index(of: card)
+        // Flips the cards once chosen
+        self.cards[chosenIndex].isFaceUp = !self.cards[chosenIndex].isFaceUp
+    }
+    
+    // external name - of, internal name - card
+    func index(of card: Card) -> Int {
+        for index in 0..<self.cards.count {
+            if self.cards[index].id == card.id {
+                return index
+            }
+        }
+        return 0 // TODO: wrong index returned after fail search of index 
     }
     
     // Initialise our model (note passes through a function)

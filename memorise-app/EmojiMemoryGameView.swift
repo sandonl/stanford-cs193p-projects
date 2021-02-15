@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct EmojiMemoryGameView: View {
-    var viewModel: EmojiMemoryGame // This is a viewModel but we shouldn't call this it usually
+    
+    // ObservedObject - will redraw the view
+    @ObservedObject var viewModel: EmojiMemoryGame // This is a viewModel but we shouldn't call this it usually
     
     // We never access this 'var body'
     // This body is instead called by the system when it draws the view.
@@ -20,8 +22,7 @@ struct EmojiMemoryGameView: View {
             }
         }.padding()
         .foregroundColor(Color.orange)
-        .font(Font.largeTitle)
-        .aspectRatio(0.66, contentMode: .fit)
+        
     }
 }
 
@@ -29,15 +30,31 @@ struct CardView: View {
     var card: MemoryGame<String>.Card
     
     var body: some View {
+        GeometryReader { geometry in
+            self.body(for: geometry.size)
+        }
+    }
+    
+    func body(for size: CGSize) -> some View {
         ZStack {
-            if card.isFaceUp {
-                RoundedRectangle(cornerRadius: 10.0).fill(Color.white)
-                RoundedRectangle(cornerRadius: 10.0).stroke(lineWidth: 3)
-                Text(card.content)
+            if self.card.isFaceUp {
+                RoundedRectangle(cornerRadius: self.cornerRadius).fill(Color.white)
+                RoundedRectangle(cornerRadius: self.cornerRadius).stroke(lineWidth: lineWidth)
+                Text(self.card.content)
             } else {
-                RoundedRectangle(cornerRadius: 10.0).fill()
+                RoundedRectangle(cornerRadius: cornerRadius).fill()
             }
         }
+        // Now letting the card set its own font using geometry reader
+        .font(Font.system(size: fontSize(for: size)))
+    }
+    
+    
+    // MARK: - Drawing Constants
+    let cornerRadius: CGFloat = 10.0
+    let lineWidth: CGFloat = 3.0
+    func fontSize(for size: CGSize) -> CGFloat {
+        min(size.width, size.height) * 0.75
     }
     
     struct ContentView_Previews: PreviewProvider {

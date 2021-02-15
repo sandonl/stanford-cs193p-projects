@@ -7,12 +7,15 @@
 
 import SwiftUI
 
-// ViewModel: portal for tview to get the model.
+// ViewModel: portal for view to get the model.
 // It is the View that talks to the viewmodel, since many views may wish to use the same viewmodel, this is why it's a class (reference)
 // ViewModel trying to convert to the MemoryGame model and also represent the View
-class EmojiMemoryGame {
+
+// ObservableObject (protocol) that allows us to gain other functions that we can send to the view - only works for classes
+class EmojiMemoryGame: ObservableObject {
     
-    private var model: MemoryGame<String> = EmojiMemoryGame.createMemoryGame()
+    // Published, everytime the model changes, it will call objectWillChange.send()
+    @Published private var model: MemoryGame<String> = EmojiMemoryGame.createMemoryGame()
     
     // static func makes this sent to the type
     static func createMemoryGame() -> MemoryGame<String> {
@@ -22,6 +25,7 @@ class EmojiMemoryGame {
             return emojis[pairIndex]
         }
     }
+    
         
     
     // MARK: - Access to the model
