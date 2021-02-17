@@ -15,14 +15,15 @@ struct EmojiMemoryGameView: View {
     // We never access this 'var body'
     // This body is instead called by the system when it draws the view.
     var body: some View {
-        HStack {
-            ForEach(viewModel.cards) { card in
-                CardView(card: card).onTapGesture{
-                    viewModel.choose(card: card) }
+        Grid(viewModel.cards) { card in
+            CardView(card: card).onTapGesture {
+                self.viewModel.choose(card: card)
             }
-        }.padding()
-        .foregroundColor(Color.orange)
-        
+            .padding(5)
+        }
+            .padding()
+            .foregroundColor(Color.orange)
+            
     }
 }
 
@@ -42,8 +43,10 @@ struct CardView: View {
                 RoundedRectangle(cornerRadius: self.cornerRadius).stroke(lineWidth: lineWidth)
                 Text(self.card.content)
             } else {
+                if !card.isMatched{
                 RoundedRectangle(cornerRadius: cornerRadius).fill()
-            }
+                }
+            } // will draw an empty view when the card has already beeen matched
         }
         // Now letting the card set its own font using geometry reader
         .font(Font.system(size: fontSize(for: size)))
