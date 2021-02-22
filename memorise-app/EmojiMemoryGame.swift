@@ -2,9 +2,7 @@
 //  EmojiMemoryGame.swift
 //  memorise-app
 //
-//  Created by Sandon Lai on 13/2/21.
-//
-
+//  Created by Sandon Lai on 13/2/21.🐼
 import SwiftUI
 
 // ViewModel: portal for view to get the model.
@@ -15,11 +13,13 @@ import SwiftUI
 class EmojiMemoryGame: ObservableObject {
     
     // Published, everytime the model changes, it will call objectWillChange.send()
+    // Note we would never call a variable 'model' but instead is used for example and provides a 'doorway' for the view
     @Published private var model: MemoryGame<String> = EmojiMemoryGame.createMemoryGame()
     
     // static func makes this sent to the type
-    static func createMemoryGame() -> MemoryGame<String> {
-        let emojis: Array<String> = ["🤯", "🐼", "🌏"]
+    private static func createMemoryGame() -> MemoryGame<String> {
+        let emojis = ["🤯", "🐼", "🌏"]
+        
         // this is a closure and we pass an inline function (one line function that returns)
         return MemoryGame<String>(numberOfPairsOfCards: emojis.count) { pairIndex in
             return emojis[pairIndex]
@@ -35,8 +35,14 @@ class EmojiMemoryGame: ObservableObject {
     
     // MARK: -Intent(s)
     
+    // Allows the user to choose a card.
     func choose(card: MemoryGame<String>.Card) {
         model.choose(card: card)
+    }
+    
+    // Creates a new game
+    func resetGame() {
+        model = EmojiMemoryGame.createMemoryGame()
     }
     
     
