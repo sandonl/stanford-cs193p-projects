@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 // Implements ObservableObject
 // An instance of this ViewModel only represents one document
@@ -15,20 +16,19 @@ class EmojiArtDocument: ObservableObject {
     
     // Implement the model (view model which interprets the model for the view)
     // @Published // workaround for property observer problem with property wrappers
-    private var emojiArt: EmojiArt = EmojiArt() {
-        willSet {
-            objectWillChange.send()
-        }
-        didSet {
-            // UserDefaults standard for lightweight persistence
-            UserDefaults.standard.set(emojiArt.json, forKey: EmojiArtDocument.untitled)
-        }
-    }
+    @Published private var emojiArt: EmojiArt
     
     private static let untitled = "EmojiArtDocument.Untitled"
     
+    private var autosaveCancellable: AnyCancellable?
+    
     init() {
         emojiArt = EmojiArt(json: UserDefaults.standard.data(forKey: EmojiArtDocument.untitled)) ?? EmojiArt()
+        // if never fails can use this version, need sink to live past the execution of the init
+        autosaveCancellable = $emojiArt.sink { emojiArt in
+            print("\(emojiArt.json?.utf8 ?? "nil")")
+            UserDefaults.standard.set(emojiArt.json, forKey: EmojiArtDocument.untitled)
+        }
         fetchBackgroundImageData()
     }
     
@@ -55,27 +55,30 @@ class EmojiArtDocument: ObservableObject {
         }
     }
     
-    func setBackground(_ url: URL?) {
-        emojiArt.backgroundURL = url?.imageURL
-        fetchBackgroundImageData()
+    var backgroundURL: URL? {
+        get {
+            emojiArt.backgroundURL
+        }
+        set {
+            emojiArt.backgroundURL = newValue?.imageURL
+            fetchBackgroundImageData()
+        }
     }
     
+    private var fetchImageCancellable: AnyCancellable?
     
     private func fetchBackgroundImageData() {
         backgroundImage = nil
         if let url = self.emojiArt.backgroundURL {
-            // Initiate a queue that conducts its code off the main queue
-            DispatchQueue.global(qos: .userInitiated).async {
-                // cannot call this function by itself as it blocks our UI (same thread as our execution)
-                if let imageData = try? Data(contentsOf: url) {
-                    // now our background drawing is on a background thread, so we need to move this back to our main queue and use async
-                    DispatchQueue.main.async {
-                        if url == self.emojiArt.backgroundURL {
-                            self.backgroundImage = UIImage(data: imageData)
-                        }
-                    }
-                }
-            }
+            fetchImageCancellable?.cancel() // only ever fetch new image
+            fetchImageCancellable = URLSession.shared.dataTaskPublisher(for: url)
+                // has been mapped to publish a UI Image instead of the original tuple using .map
+                // a publisher that publishes UIImages and on the main queue
+                .map { data, urLResponse in UIImage(data: data) }
+                .receive(on: DispatchQueue.main)
+                // now publisher publishes optional image and its error type is now 'Never'
+                .replaceError(with: nil)
+                .assign(to: \.backgroundImage, on: self)
         }
     }
 }
